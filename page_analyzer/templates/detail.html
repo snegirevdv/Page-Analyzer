@@ -1,0 +1,59 @@
+{% extends 'layouts/base.html' %}
+
+{% block main %}
+  <main class="flex-grow-1">
+    <div class="container-lg mt-3">
+      <h1>Сайт: {{ entry.name }}</h1>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover text-nowrap" data-test="url">
+          <tbody>
+            <tr>
+              <td>ID</td>
+              <td>{{ entry.id }}</td>
+            </tr>
+            <tr>
+              <td>Имя</td>
+              <td>{{ entry.name }}</td>
+            </tr>
+            <tr>
+              <td>Дата создания</td>
+              <td>{{ entry.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="mt-5 mb-3">Проверки</h2>
+      <form method="post" action="{{ url_for('checks_post', id=entry.id) }}">
+        <input type="submit" class="btn btn-primary" value="Запустить проверку" />
+      </form>
+
+      <div>
+        <table class="table table-bordered table-hover mt-2" data-test="checks">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Код ответа</th>
+              <th>h1</th>
+              <th>title</th>
+              <th>description</th>
+              <th>Дата создания</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for check in checks|reverse  %}
+              <tr>
+                <td>{{ check.id }}</td>
+                <td>{{ check.status_code }}</td>
+                <td>{{ check.h1 }}</td>
+                <td>{{ check.title }}</td>
+                <td>{{ check.description|truncate(200) }}</td>
+                <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+{% endblock %}

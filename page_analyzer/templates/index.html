@@ -1,0 +1,17 @@
+{% extends 'layouts/base.html' %}
+{% block main %}
+  <main class="flex-grow-1">
+    <div class="container-lg mt-3">
+      <div class="row">
+        <div class="col-12 col-md-10 col-lg-8 border rounded-3 bg-light p-5 mx-auto">
+          <h1 class="display-3">Анализатор страниц</h1>
+          <p class="lead">Бесплатно проверяйте сайты на SEO-пригодность</p>
+          <form action="{{ url_for('urls_post') }}" class="d-flex justify-content-center" method="post">
+            <input type="text" name="url" class="form-control form-control-lg" placeholder="https://www.example.com" value="{{ url }}" required />
+            <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 mx-3 text-uppercase" value="Проверить" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}
