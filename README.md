@@ -8,7 +8,7 @@ Page Analyzer is a simple web application that allows users to check web pages f
 ## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
-- [Requirements] (#requirements)
+- [Requirements](#requirements)
 - [Usage](#usage)
 - [Example](#license)
 
