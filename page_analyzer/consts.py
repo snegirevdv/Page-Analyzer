@@ -1,4 +1,3 @@
-# TEMPLATES
 import psycopg2
 import requests
 
