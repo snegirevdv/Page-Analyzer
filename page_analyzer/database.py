@@ -9,7 +9,7 @@ dotenv.load_dotenv()
 
 
 class Database:
-    """Обработчик запросов к базе данных."""
+    """Database query handler."""
     def __enter__(self) -> "Database":
         self.connection = psycopg2.connect(os.getenv("DATABASE_URL"))
         self.cursor = self.connection.cursor(cursor_factory=DictCursor)
@@ -27,8 +27,8 @@ class Database:
 
     def execute_query(self, query_text: str, *args):
         """
-        Выполняет запрос к базе данных из строки.
-        Принимает текст запроса и неограниченное количество параметров.
+        Executes a database query from a string.
+        Accepts the query text and an unlimited number of parameters.
         """
         if args:
             self.cursor.execute(query_text, args)
@@ -37,8 +37,8 @@ class Database:
 
     def execute_file(self, file_name: str):
         """
-        Выполняет запрос к базе данных из файла.
-        Принимает адрес файла, содержащего запрос.
+        Executes a database query from a file.
+        Accepts the file path containing the query.
         """
         with open(file_name) as file:
             query_text = file.read()

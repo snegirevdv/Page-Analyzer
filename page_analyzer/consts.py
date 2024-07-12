@@ -1,34 +1,30 @@
 import psycopg2
 import requests
 
-# TEMPLATES
-INDEX_TEMPLATE = "index.html"
-URLS_TEMPLATE = "urls.html"
-DETAIL_TEMPLATE = "detail.html"
-
-# FILE PATHES
 MIGRATION = "database.sql"
 
-# MESSAGES
-INVALID_URL = "Некорректный URL"
-ALREADY_EXISTS = "Страница уже существует"
-ADD_SUCCESS = "Страница успешно добавлена"
-ADD_FAILURE = "Ошибка при добавлении страницы"
-DOESNT_EXIST = "Такой страницы не существует"
-CHECK_SUCCESS = "Страница успешно проверена"
-CHECK_FAILURE = "Произошла ошибка при проверке"
-DB_ERROR = "Ошибка при обращении к базе данных"
+TEMPLATES = {
+    "index": "index.html",
+    "urls": "urls.html",
+    "detail": "detail.html",
+}
 
-# MESSAGE STATUSES
-DANGER = "danger"
-SUCCESS = "success"
-INFO = "info"
+MESSAGES = {
+    "invalid_url": "Некорректный URL",
+    "already_exists": "Страница уже существует",
+    "add_success": "Страница успешно добавлена",
+    "add_failure": "Ошибка при добавлении страницы",
+    "doesnt_exist": "Такой страницы не существует",
+    "check_success": "Страница успешно проверена",
+    "check_failure": "Произошла ошибка при проверке",
+    "db_error": "Ошибка при обращении к базе данных",
+}
 
-# EXCEPTIONS
 REQUEST_ERRRORS = (
     requests.exceptions.HTTPError,
     requests.exceptions.ConnectionError,
 )
+
 DATABASE_ERRORS = (
     psycopg2.DatabaseError,
     psycopg2.OperationalError,

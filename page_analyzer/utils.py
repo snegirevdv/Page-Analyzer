@@ -8,21 +8,21 @@ from validators.url import url
 
 
 def validate_url(original_url: str) -> bool:
-    """Валидирует URL."""
+    """Validates the URL."""
     return bool(url(original_url, simple_host=True))
 
 
 def sanitize_url(url: str) -> str:
-    """Очищает URL от лишних элементов."""
+    """Cleans the URL from unnecessary elements."""
     parsed_url: parse.ParseResult = parse.urlparse(url)
 
     return parse.urlunparse(
-        (parsed_url.scheme, parsed_url.netloc, '', '', '', '')
+        (parsed_url.scheme, parsed_url.netloc, "", "", "", "")
     )
 
 
 def make_check(entry: DictRow) -> tuple[int, str, str, str]:
-    """Проводит проверку URL и возвращает кортеж с результатами проверки."""
+    """Performs a URL check and returns a tuple with the results."""
     url: str = entry.get("name", "")
 
     response: requests.Response = requests.get(url)
