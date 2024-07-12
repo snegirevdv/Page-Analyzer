@@ -1,5 +1,5 @@
 import os
-from typing import Any, Self
+from typing import Any
 
 import dotenv
 import psycopg2
@@ -10,7 +10,7 @@ dotenv.load_dotenv()
 
 class Database:
     """Обработчик запросов к базе данных."""
-    def __enter__(self) -> Self:
+    def __enter__(self) -> "Database":
         self.connection = psycopg2.connect(os.getenv("DATABASE_URL"))
         self.cursor = self.connection.cursor(cursor_factory=DictCursor)
 
