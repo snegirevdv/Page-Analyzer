@@ -1,35 +1,26 @@
-from datetime import datetime
 import os
-from urllib import parse
+from typing import Optional
 
-from bs4 import BeautifulSoup
 import dotenv
-from flask import (
-    Flask,
-    flash,
-    get_flashed_messages,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
-import requests
-from page_analyzer import consts, sql
-from page_analyzer.database import Database
-from validators.url import url as validate_url
+from psycopg2.extras import DictRow
+import flask
+
+from page_analyzer import consts, manager, utils
 
 dotenv.load_dotenv()
 
-app: Flask = Flask(__name__)
+app: flask.Flask = flask.Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+db_manager: manager.DatabaseManager = manager.DatabaseManager()
 
 
 @app.get("/")
 def index() -> str:
-    messages: list = get_flashed_messages(with_categories=True)
-    url: str = request.args.get("url", "")
+    """Логика генерации главной страницы."""
+    messages: list = flask.get_flashed_messages(with_categories=True)
+    url: str = flask.request.args.get("url", "")
 
-    return render_template(
+    return flask.render_template(
         consts.INDEX_TEMPLATE,
         url=url,
         messages=messages
@@ -38,134 +29,89 @@ def index() -> str:
 
 @app.get("/urls")
 def urls() -> str:
-    with Database() as db:
-        db.execute_query(sql.URLS)
-        entries = db.cursor.fetchall()
+    """Логика генерации списка URL."""
+    entries: list[DictRow] = db_manager.get_entries()
 
-    return render_template(
+    return flask.render_template(
         consts.URLS_TEMPLATE,
-        entries=entries
+        entries=entries,
     )
 
 
 @app.get("/urls/<int:id>")
-def detail(id: int):
-    messages: list = get_flashed_messages(with_categories=True)
-
-    with Database() as db:
-        db.execute_query(sql.DETAIL, id)
-        entry = db.cursor.fetchone()
-        db.execute_query(sql.CHECKS, id)
-        checks = db.cursor.fetchall()
+def detail(id: int) -> flask.Response | str:
+    """Логика генерации страницы отдельного URL."""
+    messages: list = flask.get_flashed_messages(with_categories=True)
+    entry: DictRow = db_manager.get_entry(id)
+    checks: list[DictRow] = db_manager.get_checks(id)
 
     if entry:
-        return render_template(
+        return flask.render_template(
             consts.DETAIL_TEMPLATE,
             entry=entry,
             checks=checks,
             messages=messages,
         )
 
-    flash(consts.DOESNT_EXIST, consts.DANGER)
-    return redirect(url_for('index'))
+    flask.flash(consts.DOESNT_EXIST, consts.DANGER)
+    return flask.redirect(flask.url_for("index"))
 
 
 @app.post("/urls")
-def urls_post():
-    url = request.form.to_dict()["url"]
+def urls_post() -> str:
+    """Логика обработки POST-запроса из формы добавления URL."""
+    url: str = flask.request.form.to_dict().get("url")
 
-    if validate_url(url, simple_host=True) is not True:
-        flash(consts.INVALID_URL, consts.DANGER)
-        return render_template(
+    if not utils.validate_url(url):
+        flask.flash(consts.INVALID_URL, consts.DANGER)
+
+        return flask.render_template(
             consts.INDEX_TEMPLATE,
             url=url,
-            messages=get_flashed_messages(with_categories=True),
-            redirect_to=url_for('urls')
+            messages=flask.get_flashed_messages(with_categories=True),
+            redirect_to=flask.url_for("urls"),
         ), 422
 
-    parsed_url = parse.urlparse(url)
-
-    pure_url = parse.urlunparse(
-        (parsed_url.scheme, parsed_url.netloc, '', '', '', '')
-    )
-
-    with Database() as db:
-        db.execute_query(sql.FIND_ID, pure_url)
-        search_result = db.cursor.fetchone()
+    pure_url: str = utils.sanitize_url(url)
+    search_result: Optional[DictRow] = db_manager.search_entry_by_url(pure_url)
 
     if search_result:
-        url_id = search_result["id"]
-        flash(consts.ALREADY_EXISTS, consts.INFO)
-        return redirect(url_for('detail', id=url_id))
+        url_id: int = search_result.get('id', 0)
+        flask.flash(consts.ALREADY_EXISTS, consts.INFO)
+        return flask.redirect(flask.url_for("detail", id=url_id))
 
-    with Database() as db:
-        db.execute_query(sql.NEW_ENTRY, pure_url, datetime.now())
-        entry = db.cursor.fetchone()
+    entry: Optional[DictRow] = db_manager.create_entry(pure_url)
 
     if entry:
-        url_id = entry["id"]
-        flash(consts.ADD_SUCCESS, consts.SUCCESS)
-        return redirect(url_for('detail', id=url_id))
+        url_id: int = entry.get('id', 0)
+        flask.flash(consts.ADD_SUCCESS, consts.SUCCESS)
+        return flask.redirect(flask.url_for("detail", id=url_id))
 
-    flash(consts.ADD_FAILURE, consts.DANGER)
-    return redirect(url_for('index', url=url))
+    flask.flash(consts.ADD_FAILURE, consts.DANGER)
+    return flask.redirect(flask.url_for("index", url=url))
 
 
 @app.post('/urls/<int:id>/checks')
-def checks_post(id):
-    with Database() as db:
-        db.execute_query(sql.FIND_URL, id)
+def checks_post(id: int):
+    """Логика обработки проверки URL."""
+    entry: Optional[DictRow] = db_manager.search_entry_by_id(id)
 
-        if entry := db.cursor.fetchone():
-            try:
-                url = entry["name"]
-                response = requests.get(url)
-                response.raise_for_status()
-                status_code = response.status_code
+    if entry:
+        try:
+            args: tuple[int, str, str, str] = utils.make_check(entry)
+            db_manager.create_check(id, args)
+            flask.flash(consts.CHECK_SUCCESS, consts.SUCCESS)
 
-                parser = BeautifulSoup(response.content, 'html.parser')
+        except consts.REQUEST_ERRRORS:
+            flask.flash(consts.CHECK_FAILURE, consts.DANGER)
 
-                title_tag = parser.find('title')
-                title = title_tag.text if title_tag else ''
+        except consts.DATABASE_ERRORS:
+            flask.flash(consts.DB_ERROR, consts.DANGER)
 
-                h1_tag = parser.find('h1')
-                h1 = h1_tag.text if h1_tag else ''
+    else:
+        flask.flash(consts.DB_ERROR, consts.DANGER)
 
-                description_tag = parser.find(
-                    'meta',
-                    attrs={'name': 'description'}
-                )
-                description = (
-                    description_tag.get('content', '')
-                    if description_tag
-                    else ''
-                )
-
-                db.execute_query(
-                    sql.NEW_CHECK,
-                    id,
-                    datetime.now(),
-                    status_code,
-                    title,
-                    h1,
-                    description,
-                )
-
-                flash(consts.CHECK_SUCCESS, consts.SUCCESS)
-
-            except (
-                requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError,
-            ):
-                flash(consts.CHECK_FAILURE, consts.DANGER)
-
-            except db.exceptions:
-                flash(consts.DB_ERROR, consts.DANGER)
-
-        else:
-            flash(consts.DB_ERROR, consts.DANGER)
-
-    return redirect(url_for('detail', id=id))
+    return flask.redirect(flask.url_for("detail", id=id))
 
 
 if __name__ == "__main__":

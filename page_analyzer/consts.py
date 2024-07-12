@@ -1,4 +1,8 @@
 # TEMPLATES
+import psycopg2
+import requests
+
+# TEMPLATES
 INDEX_TEMPLATE = "index.html"
 URLS_TEMPLATE = "urls.html"
 DETAIL_TEMPLATE = "detail.html"
@@ -20,3 +24,13 @@ DB_ERROR = "Ошибка при обращении к базе данных"
 DANGER = "danger"
 SUCCESS = "success"
 INFO = "info"
+
+# EXCEPTIONS
+REQUEST_ERRRORS = (
+    requests.exceptions.HTTPError,
+    requests.exceptions.ConnectionError,
+)
+DATABASE_ERRORS = (
+    psycopg2.DatabaseError,
+    psycopg2.OperationalError,
+)
