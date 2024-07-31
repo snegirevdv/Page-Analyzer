@@ -3,8 +3,8 @@ DROP TABLE IF EXISTS url_checks CASCADE;
 
 CREATE TABLE IF NOT EXISTS urls (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS url_checks (
@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS url_checks (
     status_code INTEGER,
     h1 VARCHAR(255),
     title VARCHAR(255),
-    description TEXT,
-    created_at TIMESTAMP
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

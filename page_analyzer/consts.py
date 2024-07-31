@@ -29,3 +29,5 @@ DATABASE_ERRORS = (
     psycopg2.DatabaseError,
     psycopg2.OperationalError,
 )
+
+MAX_LENGTH = 255

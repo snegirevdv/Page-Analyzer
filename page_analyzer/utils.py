@@ -6,6 +6,8 @@ import requests
 from psycopg2.extras import DictRow
 from validators.url import url
 
+from page_analyzer import consts
+
 
 def validate_url(original_url: str) -> bool:
     """Validates the URL."""
@@ -32,17 +34,17 @@ def make_check(entry: DictRow) -> tuple[int, str, str, str]:
     status_code: int = response.status_code
 
     title_tag: Optional[bs4.Tag] = parser.find("title")
-    title: str = title_tag.text if title_tag else ""
+    title: str = title_tag.text[0:consts.MAX_LENGTH] if title_tag else ""
 
     h1_tag: Optional[bs4.Tag] = parser.find("h1")
-    h1: str = h1_tag.text if h1_tag else ""
+    h1: str = h1_tag.text[0:consts.MAX_LENGTH] if h1_tag else ""
 
     description_tag: Optional[bs4.Tag] = parser.find(
         name="meta",
         attrs={"name": "description"},
     )
     description: str = (
-        description_tag.get("content", "")
+        description_tag.get("content", "")[0:consts.MAX_LENGTH]
         if description_tag else ""
     )
 
