@@ -24,11 +24,10 @@ def sanitize_url(url: str) -> str:
 
 
 def get_response(entry: DictRow) -> requests.Response:
-    """Get HTTP response for URL from entry."""
+    """Returns response for the url from the current entry."""
     url: str = entry.get("name", "")
     response: requests.Response = requests.get(url)
     response.raise_for_status()
-
     return response
 
 
