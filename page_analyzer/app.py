@@ -4,6 +4,7 @@ from typing import Optional
 import dotenv
 from psycopg2.extras import DictRow
 import flask
+import requests
 
 from page_analyzer import consts, manager, utils
 
@@ -95,10 +96,11 @@ def urls_post() -> str:
 def checks_post(id: int):
     """Logic for handling URL check."""
     entry: Optional[DictRow] = db_manager.search_entry_by_id(id)
+    response: requests.Response = utils.get_response(entry)
 
     if entry:
         try:
-            args: tuple[int, str, str, str] = utils.make_check(entry)
+            args: tuple[int, str, str, str] = utils.make_check(response)
             db_manager.create_check(id, args)
             flask.flash(consts.MESSAGES["check_success"], "success")
 
