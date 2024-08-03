@@ -22,7 +22,7 @@ def index() -> str:
     url: str = flask.request.args.get("url", "")
 
     return flask.render_template(
-        consts.Template.INDEX,
+        consts.Template.INDEX.value,
         url=url,
         messages=messages
     )
@@ -34,7 +34,7 @@ def urls() -> str:
     entries: list[DictRow] = db_manager.get_entries()
 
     return flask.render_template(
-        consts.Template.URLS,
+        consts.Template.URLS.value,
         entries=entries,
     )
 
@@ -48,13 +48,13 @@ def detail(id: int) -> flask.Response | str:
 
     if entry:
         return flask.render_template(
-            consts.Template.DETAIL,
+            consts.Template.DETAIL.value,
             entry=entry,
             checks=checks,
             messages=messages,
         )
 
-    flask.flash(consts.Message.DOESNT_EXIST, "danger")
+    flask.flash(consts.Message.DOESNT_EXIST.value, "danger")
     return flask.redirect(flask.url_for("index"))
 
 
@@ -64,10 +64,10 @@ def urls_post() -> str:
     url: str = flask.request.form.to_dict().get("url")
 
     if not utils.is_valid_url(url):
-        flask.flash(consts.Message.INVALID_URL, "danger")
+        flask.flash(consts.Message.INVALID_URL.value, "danger")
 
         return flask.render_template(
-            consts.Template.INDEX,
+            consts.Template.INDEX.value,
             url=url,
             messages=flask.get_flashed_messages(with_categories=True),
             redirect_to=flask.url_for("urls"),
@@ -78,17 +78,17 @@ def urls_post() -> str:
 
     if search_result:
         url_id: int = search_result.get("id", 0)
-        flask.flash(consts.Message.ALREADY_EXISTS, "info")
+        flask.flash(consts.Message.ALREADY_EXISTS.value, "info")
         return flask.redirect(flask.url_for("detail", id=url_id))
 
     entry: Optional[DictRow] = db_manager.create_entry(pure_url)
 
     if entry:
         url_id: int = entry.get("id", 0)
-        flask.flash(consts.Message.ADD_SUCCESS, "success")
+        flask.flash(consts.Message.ADD_SUCCESS.value, "success")
         return flask.redirect(flask.url_for("detail", id=url_id))
 
-    flask.flash(consts.Message.ADD_FAILURE, "danger")
+    flask.flash(consts.Message.ADD_FAILURE.value, "danger")
     return flask.redirect(flask.url_for("index", url=url))
 
 
@@ -102,10 +102,10 @@ def checks_post(id: int):
             response: requests.Response = utils.get_response(entry)
             args: tuple[int, str, str, str] = utils.make_check(response)
             db_manager.create_check(id, args)
-            flask.flash(consts.Message.CHECK_SUCCESS, "success")
+            flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
 
         except consts.Error.REQUEST:
-            flask.flash(consts.Message.CHECK_FAILURE, "danger")
+            flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
         except consts.Error.DATABASE:
             flask.flash(consts.Message.DB_ERROR, "danger")

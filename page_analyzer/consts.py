@@ -1,5 +1,4 @@
-from enum import StrEnum
-from typing import NamedTuple
+from enum import Enum
 import psycopg2
 import requests
 
@@ -7,7 +6,7 @@ MIGRATION = "database.sql"
 MAX_LENGTH = 255
 
 
-class Template(StrEnum):
+class Template(Enum):
     """Template URLs."""
 
     INDEX = "index.html"
@@ -15,7 +14,7 @@ class Template(StrEnum):
     DETAIL = "detail.html"
 
 
-class Message(StrEnum):
+class Message(Enum):
     """Flash message texts."""
 
     INVALID_URL = "Некорректный URL"
@@ -28,7 +27,7 @@ class Message(StrEnum):
     DB_ERROR = "Ошибка при обращении к базе данных"
 
 
-class Error(NamedTuple):
+class Error:
     """Exception type lists."""
 
     REQUEST = (
