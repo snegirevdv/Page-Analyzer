@@ -9,7 +9,7 @@ from validators.url import url
 from page_analyzer import consts
 
 
-def validate_url(original_url: str) -> bool:
+def is_valid_url(original_url: str) -> bool:
     """Validates the URL."""
     return bool(url(original_url, simple_host=True))
 

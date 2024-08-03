@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Any
 
 import dotenv
@@ -40,6 +41,8 @@ class Database:
         Executes a database query from a file.
         Accepts the file path containing the query.
         """
-        with open(file_name) as file:
+        path = Path(file_name)
+
+        with path.open() as file:
             query_text = file.read()
             self.execute_query(query_text)
