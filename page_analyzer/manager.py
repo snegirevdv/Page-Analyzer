@@ -16,6 +16,12 @@ class DatabaseManager:
             db.execute_query(sql.URLS)
             return db.cursor.fetchall()
 
+    def get_last_checks(self) -> list[DictRow]:
+        """Returns a list of entries."""
+        with Database() as db:
+            db.execute_query(sql.LAST_CHECKS)
+            return db.cursor.fetchall()
+
     def get_entry(self, id: int) -> Optional[DictRow]:
         """Returns an entry by id."""
         with Database() as db:

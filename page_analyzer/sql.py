@@ -1,26 +1,22 @@
 URLS = """
 SELECT
-    urls.id AS id,
-    urls.name AS name,
-    urls.created_at AS created_at,
-    MAX(url_checks.created_at) AS last_check_date,
-    (
-        SELECT status_code
-        FROM url_checks
-        WHERE url_checks.url_id = urls.id
-        ORDER BY id DESC
-        LIMIT 1
-    ) AS last_check_status_code
+    id,
+    name,
+    created_at
 FROM
-    urls
-LEFT JOIN
+    urls;
+"""
+
+LAST_CHECKS = """
+SELECT DISTINCT ON (url_id)
+    url_id as id,
+    created_at as last_check_date,
+    status_code as last_check_status_code
+FROM
     url_checks
-ON
-    urls.id = url_checks.url_id
-GROUP BY
-    urls.id, urls.name, urls.created_at
 ORDER BY
-    urls.id;
+    url_id,
+    created_at DESC;
 """
 
 DETAIL = """

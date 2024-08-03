@@ -32,10 +32,12 @@ def index() -> str:
 def urls() -> str:
     """Logic for generating the list of URLs."""
     entries: list[DictRow] = db_manager.get_entries()
+    last_checks: list[DictRow] = db_manager.get_last_checks()
+    merged_entries: list[dict] = utils.merge_entries(entries, last_checks)
 
     return flask.render_template(
         consts.Template.URLS.value,
-        entries=entries,
+        entries=merged_entries,
     )
 
 

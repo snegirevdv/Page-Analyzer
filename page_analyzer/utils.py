@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Optional
 from urllib import parse
 
@@ -7,6 +8,19 @@ from psycopg2.extras import DictRow
 from validators.url import url
 
 from page_analyzer import consts
+
+
+def merge_entries(entries: list[DictRow], checks: list[DictRow]) -> list[dict]:
+    """Returns a list of entries merged with the check list."""
+    result = defaultdict(dict)
+
+    for entry in entries:
+        result[entry["id"]].update(entry)
+
+    for check in checks:
+        result[check["id"]].update(check)
+
+    return [result[key] for key in sorted(result, reverse=True)]
 
 
 def is_valid_url(original_url: str) -> bool:
