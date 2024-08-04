@@ -1,3 +1,4 @@
+from http import HTTPStatus
 import os
 from typing import Optional
 
@@ -17,6 +18,16 @@ app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 
 db = database.Database(app.config.get("DATABASE_URL"))
 manager = sql.Manager(db)
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return flask.render_template('errors/500.html'), 500
+
+
+@app.errorhandler(404)
+def not_found_error(e):
+    return flask.render_template('errors/404.html'), 404
 
 
 @app.get("/")
@@ -121,10 +132,10 @@ def checks_post(id: int):
                 flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
             except (psycopg2.DatabaseError, psycopg2.OperationalError):
-                flask.flash(consts.Message.DB_ERROR, "danger")
+                flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         else:
-            flask.flash(consts.Message.DB_ERROR, "danger")
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         return flask.redirect(flask.url_for("detail", id=id))
 
