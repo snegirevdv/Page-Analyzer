@@ -1,48 +1,29 @@
-import os
-from pathlib import Path
-from typing import Any
-
-import dotenv
 import psycopg2
-from psycopg2.extras import DictCursor
-
-dotenv.load_dotenv()
 
 
 class Database:
-    """Database query handler."""
-    def __enter__(self) -> "Database":
-        self.connection = psycopg2.connect(os.getenv("DATABASE_URL"))
-        self.cursor = self.connection.cursor(cursor_factory=DictCursor)
+    def __init__(self, database_url):
+        self.database_url = database_url
+        self.connection = None
 
-        return self
+    def connect(self):
+        if self.is_connected:
+            self.connection.close()
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        if exc_type is not None:
-            self.connection.rollback()
-        else:
-            self.connection.commit()
+        self.connection = psycopg2.connect(self.database_url)
+        self.connection.autocommit = True
 
-        self.cursor.close()
-        self.connection.close()
+        return self.connection
 
-    def execute_query(self, query_text: str, *args):
-        """
-        Executes a database query from a string.
-        Accepts the query text and an unlimited number of parameters.
-        """
-        if args:
-            self.cursor.execute(query_text, args)
-        else:
-            self.cursor.execute(query_text)
+    def close(self):
+        if self.is_connected:
+            self.connection.close()
 
-    def execute_file(self, file_name: str):
-        """
-        Executes a database query from a file.
-        Accepts the file path containing the query.
-        """
-        path = Path(file_name)
+    def get_connection(self):
+        if not self.is_connected:
+            self.connect()
+        return self.connection
 
-        with path.open() as file:
-            query_text = file.read()
-            self.execute_query(query_text)
+    @property
+    def is_connected(self):
+        return self.connection and not self.connection.closed

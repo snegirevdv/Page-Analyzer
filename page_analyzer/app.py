@@ -6,13 +6,15 @@ from psycopg2.extras import DictRow
 import flask
 import requests
 
-from page_analyzer import consts, manager, utils
+from page_analyzer import consts, database, sql, utils
 
 dotenv.load_dotenv()
 
 app: flask.Flask = flask.Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-db_manager: manager.DatabaseManager = manager.DatabaseManager()
+
+db = database.Database(os.getenv("DATABASE_URL"))
+manager: sql.Manager = sql.Manager(db)
 
 
 @app.get("/")
@@ -31,8 +33,10 @@ def index() -> str:
 @app.get("/urls")
 def urls() -> str:
     """Logic for generating the list of URLs."""
-    entries: list[DictRow] = db_manager.get_entries()
-    last_checks: list[DictRow] = db_manager.get_last_checks()
+    with db.connect() as _:
+        entries: list[DictRow] = manager.get_entries()
+        last_checks: list[DictRow] = manager.get_last_checks()
+
     merged_entries: list[dict] = utils.merge_entries(entries, last_checks)
 
     return flask.render_template(
@@ -45,8 +49,10 @@ def urls() -> str:
 def detail(id: int) -> flask.Response | str:
     """Logic for generating the page of a specific URL."""
     messages: list = flask.get_flashed_messages(with_categories=True)
-    entry: DictRow = db_manager.get_entry(id)
-    checks: list[DictRow] = db_manager.get_checks(id)
+
+    with db.connect() as _:
+        entry: DictRow = manager.get_entry(id)
+        checks: list[DictRow] = manager.get_checks(id)
 
     if entry:
         return flask.render_template(
@@ -75,15 +81,16 @@ def urls_post() -> str:
             redirect_to=flask.url_for("urls"),
         ), 422
 
-    pure_url: str = utils.sanitize_url(url)
-    search_result: Optional[DictRow] = db_manager.search_entry_by_url(pure_url)
+    with db.connect() as _:
+        pure_url: str = utils.sanitize_url(url)
+        search_result: Optional[DictRow] = manager.search_entry_by_url(pure_url)
 
-    if search_result:
-        url_id: int = search_result.get("id", 0)
-        flask.flash(consts.Message.ALREADY_EXISTS.value, "info")
-        return flask.redirect(flask.url_for("detail", id=url_id))
+        if search_result:
+            url_id: int = search_result.get("id", 0)
+            flask.flash(consts.Message.ALREADY_EXISTS.value, "info")
+            return flask.redirect(flask.url_for("detail", id=url_id))
 
-    entry: Optional[DictRow] = db_manager.create_entry(pure_url)
+        entry: Optional[DictRow] = manager.create_entry(pure_url)
 
     if entry:
         url_id: int = entry.get("id", 0)
@@ -97,25 +104,26 @@ def urls_post() -> str:
 @app.post("/urls/<int:id>/checks")
 def checks_post(id: int):
     """Logic for handling URL check."""
-    entry: Optional[DictRow] = db_manager.search_entry_by_id(id)
+    with db.connect() as _:
+        entry: Optional[DictRow] = manager.search_entry_by_id(id)
 
-    if entry:
-        try:
-            response: requests.Response = utils.get_response(entry)
-            args: tuple[int, str, str, str] = utils.make_check(response)
-            db_manager.create_check(id, args)
-            flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
+        if entry:
+            try:
+                response: requests.Response = utils.get_response(entry)
+                args: tuple[int, str, str, str] = utils.make_check(response)
+                manager.create_check(id, args)
+                flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
 
-        except consts.Error.REQUEST:
-            flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
+            except consts.Error.REQUEST:
+                flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
-        except consts.Error.DATABASE:
+            except consts.Error.DATABASE:
+                flask.flash(consts.Message.DB_ERROR, "danger")
+
+        else:
             flask.flash(consts.Message.DB_ERROR, "danger")
 
-    else:
-        flask.flash(consts.Message.DB_ERROR, "danger")
-
-    return flask.redirect(flask.url_for("detail", id=id))
+        return flask.redirect(flask.url_for("detail", id=id))
 
 
 if __name__ == "__main__":
