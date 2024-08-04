@@ -1,6 +1,4 @@
 from enum import Enum
-import psycopg2
-import requests
 
 MIGRATION = "database.sql"
 MAX_LENGTH = 255
@@ -25,17 +23,3 @@ class Message(Enum):
     CHECK_SUCCESS = "Страница успешно проверена"
     CHECK_FAILURE = "Произошла ошибка при проверке"
     DB_ERROR = "Ошибка при обращении к базе данных"
-
-
-class Error:
-    """Exception type lists."""
-
-    REQUEST = (
-        requests.exceptions.HTTPError,
-        requests.exceptions.ConnectionError,
-    )
-
-    DATABASE = (
-        psycopg2.DatabaseError,
-        psycopg2.OperationalError,
-    )

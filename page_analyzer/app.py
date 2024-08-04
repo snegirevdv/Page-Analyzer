@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import dotenv
+import psycopg2
 from psycopg2.extras import DictRow
 import flask
 import requests
@@ -12,9 +13,10 @@ dotenv.load_dotenv()
 
 app: flask.Flask = flask.Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 
-db = database.Database(os.getenv("DATABASE_URL"))
-manager: sql.Manager = sql.Manager(db)
+db = database.Database(app.config.get("DATABASE_URL"))
+manager = sql.Manager(db)
 
 
 @app.get("/")
@@ -33,7 +35,7 @@ def index() -> str:
 @app.get("/urls")
 def urls() -> str:
     """Logic for generating the list of URLs."""
-    with db.connect() as _:
+    with db.connect():
         entries: list[DictRow] = manager.get_entries()
         last_checks: list[DictRow] = manager.get_last_checks()
 
@@ -50,7 +52,7 @@ def detail(id: int) -> flask.Response | str:
     """Logic for generating the page of a specific URL."""
     messages: list = flask.get_flashed_messages(with_categories=True)
 
-    with db.connect() as _:
+    with db.connect():
         entry: DictRow = manager.get_entry(id)
         checks: list[DictRow] = manager.get_checks(id)
 
@@ -81,7 +83,7 @@ def urls_post() -> str:
             redirect_to=flask.url_for("urls"),
         ), 422
 
-    with db.connect() as _:
+    with db.connect():
         pure_url: str = utils.sanitize_url(url)
         search_result: Optional[DictRow] = manager.search_entry_by_url(pure_url)
 
@@ -104,7 +106,7 @@ def urls_post() -> str:
 @app.post("/urls/<int:id>/checks")
 def checks_post(id: int):
     """Logic for handling URL check."""
-    with db.connect() as _:
+    with db.connect():
         entry: Optional[DictRow] = manager.search_entry_by_id(id)
 
         if entry:
@@ -114,10 +116,11 @@ def checks_post(id: int):
                 manager.create_check(id, args)
                 flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
 
-            except consts.Error.REQUEST:
+            except (requests.exceptions.HTTPError,
+                    requests.exceptions.ConnectionError):
                 flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
-            except consts.Error.DATABASE:
+            except (psycopg2.DatabaseError, psycopg2.OperationalError):
                 flask.flash(consts.Message.DB_ERROR, "danger")
 
         else:
