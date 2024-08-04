@@ -10,7 +10,7 @@ Page Analyzer is a simple web application that allows users to check web pages f
 - [Installation](#installation)
 - [Requirements](#requirements)
 - [Usage](#usage)
-- [Example](#license)
+- [Example](#example)
 
 ## Features
 - Analyze web pages for SEO-related issues
@@ -57,3 +57,8 @@ Page Analyzer is a simple web application that allows users to check web pages f
 3. Enter the URL of the web page you want to analyze and click the button.
 4. Click the check button.
 5. View the analysis results and suggested improvements.
+
+
+## Example
+
+https://page-analyzer-ic89.onrender.com
