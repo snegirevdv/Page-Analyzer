@@ -1,9 +1,10 @@
 from http import HTTPStatus
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 from typing import Optional
 
 import dotenv
-import psycopg2
 from psycopg2.extras import DictRow
 import flask
 import requests
@@ -12,22 +13,42 @@ from page_analyzer import consts, database, sql, utils
 
 dotenv.load_dotenv()
 
+logging.basicConfig(level=logging.INFO, handlers=[
+    RotatingFileHandler(filename="logs/app.log", maxBytes=10000, backupCount=3),
+])
+logger = logging.getLogger(__name__)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+
+logger.info("Running Flask project.")
+
+
 app: flask.Flask = flask.Flask(__name__)
+
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 
 db = database.Database(app.config.get("DATABASE_URL"))
 manager = sql.Manager(db)
 
+logger.info("The project is successfully run.")
+
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return flask.render_template('errors/500.html'), 500
+    """Displays custom Error 500 page."""
+    logger.error(f"Internal server error: {e}")
+    return (
+        flask.render_template('errors/500.html'),
+        HTTPStatus.INTERNAL_SERVER_ERROR
+    )
 
 
 @app.errorhandler(404)
 def not_found_error(e):
-    return flask.render_template('errors/404.html'), 404
+    """Displays custom Error 500 page."""
+    logger.error(f"Page not found: {e}")
+    return flask.render_template('errors/404.html'), HTTPStatus.NOT_FOUND
 
 
 @app.get("/")
@@ -35,6 +56,8 @@ def index() -> str:
     """Logic for generating the main page."""
     messages: list = flask.get_flashed_messages(with_categories=True)
     url: str = flask.request.args.get("url", "")
+
+    logger.info("Rendering home page.")
 
     return flask.render_template(
         consts.Template.INDEX.value,
@@ -52,6 +75,8 @@ def urls() -> str:
 
     merged_entries: list[dict] = utils.merge_entries(entries, last_checks)
 
+    logger.info("Rendering URLs page.")
+
     return flask.render_template(
         consts.Template.URLS.value,
         entries=merged_entries,
@@ -68,6 +93,7 @@ def detail(id: int) -> flask.Response | str:
         checks: list[DictRow] = manager.get_checks(id)
 
     if entry:
+        logger.info(f"Rendering entry with id {id} detail page")
         return flask.render_template(
             consts.Template.DETAIL.value,
             entry=entry,
@@ -75,6 +101,7 @@ def detail(id: int) -> flask.Response | str:
             messages=messages,
         )
 
+    logger.warning(f"Entry {id} does not exist. Redirecting to the home page.")
     flask.flash(consts.Message.DOESNT_EXIST.value, "danger")
     return flask.redirect(flask.url_for("index"))
 
@@ -85,6 +112,8 @@ def urls_post() -> str:
     url: str = flask.request.form.to_dict().get("url")
 
     if not utils.is_valid_url(url):
+        logger.info(f"Received an invalid url: {url}. Redirecting to URLs list.")
+
         flask.flash(consts.Message.INVALID_URL.value, "danger")
 
         return flask.render_template(
@@ -92,13 +121,14 @@ def urls_post() -> str:
             url=url,
             messages=flask.get_flashed_messages(with_categories=True),
             redirect_to=flask.url_for("urls"),
-        ), 422
+        ), HTTPStatus.UNPROCESSABLE_ENTITY
 
     with db.connect():
         pure_url: str = utils.sanitize_url(url)
         search_result: Optional[DictRow] = manager.search_entry_by_url(pure_url)
 
         if search_result:
+            logger.info("Requested entry exists. Redirecting to its page.")
             url_id: int = search_result.get("id", 0)
             flask.flash(consts.Message.ALREADY_EXISTS.value, "info")
             return flask.redirect(flask.url_for("detail", id=url_id))
@@ -106,10 +136,12 @@ def urls_post() -> str:
         entry: Optional[DictRow] = manager.create_entry(pure_url)
 
     if entry:
+        logger.info("Entry was successfully added. Redirecting to its page.")
         url_id: int = entry.get("id", 0)
         flask.flash(consts.Message.ADD_SUCCESS.value, "success")
         return flask.redirect(flask.url_for("detail", id=url_id))
 
+    logger.warning("The addition failed. Redirecting to home page.")
     flask.flash(consts.Message.ADD_FAILURE.value, "danger")
     return flask.redirect(flask.url_for("index", url=url))
 
@@ -127,16 +159,19 @@ def checks_post(id: int):
                 manager.create_check(id, args)
                 flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
 
-            except (requests.exceptions.HTTPError,
-                    requests.exceptions.ConnectionError):
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"The check failed due to network problems: {e}")
                 flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
-            except (psycopg2.DatabaseError, psycopg2.OperationalError):
+            except Exception as e:
+                logger.error(f"Error: {e}.", exc_info=True)
                 flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         else:
+            logger.error(f"Entry with id {id} isn't found.")
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
+        logger.info("Check is succesfully finished. Redirecting to entry page.")
         return flask.redirect(flask.url_for("detail", id=id))
 
 

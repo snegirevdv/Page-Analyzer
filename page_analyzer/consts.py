@@ -2,6 +2,7 @@ from enum import Enum
 
 MIGRATION = "database.sql"
 MAX_LENGTH = 255
+LOGGER_SIZE = 1_000_000
 
 
 class Template(Enum):
