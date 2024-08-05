@@ -97,7 +97,7 @@ class Manager:
             INSERT INTO urls (name, created_at)
             VALUES (%s, %s) RETURNING id;
             """
-        return self._execute(sql, url, all=False)
+        return self._execute(sql, url, datetime.now(), all=False)
 
     def create_check(self, id: int, args: tuple[int, str, str, str]) -> DictRow:
         """Creates a check."""
