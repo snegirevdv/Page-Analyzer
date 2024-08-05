@@ -1,6 +1,5 @@
 from http import HTTPStatus
 import logging
-from logging.handlers import RotatingFileHandler
 import os
 from typing import Optional
 
@@ -13,15 +12,11 @@ from page_analyzer import consts, database, sql, utils
 
 dotenv.load_dotenv()
 
-logging.basicConfig(level=logging.INFO, handlers=[
-    RotatingFileHandler(filename="logs/app.log", maxBytes=10000, backupCount=3),
-])
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
-
 logger.info("Running Flask project.")
-
 
 app: flask.Flask = flask.Flask(__name__)
 
