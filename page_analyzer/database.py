@@ -27,12 +27,12 @@ class Database:
             logger.info("Connecting to the database.")
             self.connection = psycopg2.connect(self.__database_url)
             self.connection.autocommit = True
-            logger.info("Successfully connected to the database.")
+            logger.info("Connected to the database.")
 
             return self.connection
 
         except Exception as e:
-            logger.error("Failed to connect to the database.", exc_info=True)
+            logger.error(f"Connection error: {e}", exc_info=True)
             raise e
 
     def close(self):

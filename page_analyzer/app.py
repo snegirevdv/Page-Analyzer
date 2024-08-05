@@ -26,13 +26,13 @@ app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 db = database.Database(app.config.get("DATABASE_URL"))
 manager = sql.Manager(db)
 
-logger.info("The project is successfully run.")
+logger.info("The project successfully started.")
 
 
 @app.errorhandler(500)
 def internal_server_error(e):
     """Displays custom Error 500 page."""
-    logger.error(f"Internal server error: {e}")
+    logger.error(f"Internal Server Error: {e}")
     return (
         flask.render_template('errors/500.html'),
         HTTPStatus.INTERNAL_SERVER_ERROR
@@ -42,7 +42,7 @@ def internal_server_error(e):
 @app.errorhandler(404)
 def not_found_error(e):
     """Displays custom Error 500 page."""
-    logger.error(f"Page not found: {e}")
+    logger.error(f"Page Not Found: {e}")
     return flask.render_template('errors/404.html'), HTTPStatus.NOT_FOUND
 
 
@@ -107,7 +107,7 @@ def urls_post() -> str:
     url: str = flask.request.form.to_dict().get("url")
 
     if not utils.is_valid_url(url):
-        logger.info(f"Received an invalid url: {url}. Redirecting to URLs list.")
+        logger.info(f"Received an invalid URL {url}. Redirecting to URLs list.")
 
         flask.flash(consts.Message.INVALID_URL.value, "danger")
 
@@ -131,7 +131,7 @@ def urls_post() -> str:
         entry: Optional[DictRow] = manager.create_entry(pure_url)
 
     if entry:
-        logger.info("Entry was successfully added. Redirecting to its page.")
+        logger.info("Entry successfully added. Redirecting to its page.")
         url_id: int = entry.get("id", 0)
         flask.flash(consts.Message.ADD_SUCCESS.value, "success")
         return flask.redirect(flask.url_for("detail", id=url_id))
@@ -155,7 +155,7 @@ def checks_post(id: int):
                 flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
 
             except requests.exceptions.RequestException as e:
-                logger.warning(f"The check failed due to network problems: {e}")
+                logger.warning(f"The check failed due to network issues: {e}")
                 flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
             except Exception as e:
@@ -166,7 +166,7 @@ def checks_post(id: int):
             logger.error(f"Entry with id {id} isn't found.")
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        logger.info("Check is succesfully finished. Redirecting to entry page.")
+        logger.info("Check succesfully finished. Redirecting to entry page.")
         return flask.redirect(flask.url_for("detail", id=id))
 
 

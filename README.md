@@ -6,6 +6,7 @@
 Page Analyzer is a simple web application that allows users to check web pages for SEO-related issues and improvements. It helps you analyze and enhance your website's performance by checking for various factors that influence SEO rankings.
 
 ## Table of Contents
+
 - [Features](#features)
 - [Installation](#installation)
 - [Requirements](#requirements)
@@ -13,42 +14,49 @@ Page Analyzer is a simple web application that allows users to check web pages f
 - [Example](#example)
 
 ## Features
-- Analyze web pages for SEO-related issues
-- Check for HTML structure, keywords, and other SEO factors
-- User-friendly web interface
-- Database storage for analyzed pages
+
+- Analyzes web pages for SEO-related issues
+- Checks for HTML structure, keywords, and other SEO factors
+- Provides a user-friendly web interface
+- Stores analyzed pages in a database
 
 ## Requirements
+
 - Python 3.8+
 - Poetry
 - PostgreSQL
 
 ## Setup
+
 1. Clone the repository:
-    ```sh
-    git clone https://github.com/snegirevdv/python-project-83.git
-    ```
+
+   ```sh
+   git clone https://github.com/snegirevdv/python-project-83.git
+   ```
 
 2. Change the directory:
-    ```sh
-    cd python-project-83
-    ```
+
+   ```sh
+   cd python-project-83
+   ```
 
 3. Configure the environment variables by creating a `.env` file:
-    ```sh
-    touch .env
-    # Update the .env file with your configuration
-    ```
+
+   ```sh
+   touch .env
+   # Update the .env file with your configuration
+   ```
 
 4. Install the dependencies and initialize the database:
-    ```sh
-    make build
-    ```
+
+   ```sh
+   make build
+   ```
 
 5. Run the application:
-    ```sh
-    make start
-    ```
+   ```sh
+   make start
+   ```
 
 ## Usage
 
@@ -57,7 +65,6 @@ Page Analyzer is a simple web application that allows users to check web pages f
 3. Enter the URL of the web page you want to analyze and click the button.
 4. Click the check button.
 5. View the analysis results and suggested improvements.
-
 
 ## Example
 

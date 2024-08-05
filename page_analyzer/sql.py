@@ -15,8 +15,6 @@ class Manager:
 
     def _create_cursor(self):
         """Returns a new dict cursor."""
-        logger.info("Creating a connection cursor.")
-
         try:
             self.cursor = (self.db
                            .get_connection()
@@ -35,11 +33,11 @@ class Manager:
         If param all is True, returns the list of entries,
         else returns a single entry.
         """
-        logger.info(f"Executing a SQL query: {sql.format(*args)}")
+        logger.info(f"Executing SQL query: {sql.format(*args)}")
         with self._create_cursor() as cursor:
             try:
                 cursor.execute(sql, args)
-                logger.info("The query is succesfully executed.")
+                logger.info("The query succesfully executed.")
 
                 if all:
                     return cursor.fetchall()

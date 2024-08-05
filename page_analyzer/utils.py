@@ -33,7 +33,7 @@ def is_valid_url(original_url: str) -> bool:
 
 def sanitize_url(url: str) -> str:
     """Cleans the URL from unnecessary elements."""
-    logger.info("URL sanitizing is started.")
+    logger.info("URL normalizing started.")
 
     try:
         parsed_url: parse.ParseResult = parse.urlparse(url)
@@ -42,17 +42,17 @@ def sanitize_url(url: str) -> str:
         )
 
     except Exception as e:
-        logger.error(f"URL sanitizing failed. Error: {e}", exc_info=True)
+        logger.error(f"URL normalizing failed. Error: {e}", exc_info=True)
         raise
 
-    logger.info("URL was succesfully sanitized.")
+    logger.info("URL succesfully normalized.")
     return sanitized_url
 
 
 def get_response(entry: DictRow) -> requests.Response:
     """Returns response for the url from the current entry."""
     url: str = entry.get("name", "")
-    logger.info("HTTP response receiving is started.")
+    logger.info("Receiving HTTP response started.")
 
     try:
         response: requests.Response = requests.get(url)
@@ -62,7 +62,7 @@ def get_response(entry: DictRow) -> requests.Response:
         logger.error(f"HTTP error: {e}", exc_info=True)
         raise
 
-    logger.info("HTTP response was succesfully received.")
+    logger.info("HTTP response successfully received.")
     return response
 
 
