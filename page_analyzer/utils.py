@@ -94,4 +94,5 @@ def make_check(response: requests.Response) -> tuple[int, str, str, str]:
         logger.error(f"Parsing error: {e}", exc_info=True)
         raise
 
+    logger.info("Parsing was succesfully finished.")
     return (status_code, title, h1, description)
