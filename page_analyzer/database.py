@@ -31,7 +31,7 @@ class Database:
             return self.connection
 
         except psycopg2.Error as e:
-            logger.error(f"Connection error: {e}", exc_info=True)
+            logger.error(f"Connection error: {e}")
             raise DatabaseConnectionError
 
     def close(self):

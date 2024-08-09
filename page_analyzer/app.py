@@ -159,8 +159,8 @@ def checks_post(id: int):
                 logger.error(f"Entry with id {id} isn't found.")
                 flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    except ResponseError as e:
-        logger.warning(f"The check failed due to network issues: {e}")
+    except ResponseError:
+        logger.warning("The check failed due to network issues.")
         flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
     except (ParsingError, SqlError):

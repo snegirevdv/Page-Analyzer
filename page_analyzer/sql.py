@@ -23,7 +23,7 @@ class Manager:
                            .cursor(cursor_factory=DictCursor))
 
         except psycopg2.Error as e:
-            logger.error(f"Connection error: {e}.", exc_info=True)
+            logger.error(f"Connection error: {e}.")
             raise DatabaseConnectionError
 
         return self.cursor
@@ -37,11 +37,11 @@ class Manager:
                 cursor.execute(sql)
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchall()
@@ -61,11 +61,11 @@ class Manager:
                 cursor.execute(sql)
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchall()
@@ -78,11 +78,11 @@ class Manager:
                 cursor.execute(sql, (id, ))
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchone()
@@ -101,11 +101,11 @@ class Manager:
                 cursor.execute(sql, (id, ))
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchall()
@@ -119,11 +119,11 @@ class Manager:
                 cursor.execute(sql, (url, ))
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchone()
@@ -137,11 +137,11 @@ class Manager:
                 cursor.execute(sql, (id, ))
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchone()
@@ -158,11 +158,11 @@ class Manager:
                 cursor.execute(sql, (url, datetime.now()))
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchone()
@@ -180,11 +180,11 @@ class Manager:
                 cursor.execute(sql, (id, datetime.now(), *args))
 
             except psycopg2.ProgrammingError as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
+                logger.error(f"SQL error: {e}.")
                 raise SqlError
 
             except psycopg2.InterfaceError as e:
-                logger.error(f"Connection error: {e}.", exc_info=True)
+                logger.error(f"Connection error: {e}.")
                 raise DatabaseConnectionError
 
             return cursor.fetchone()

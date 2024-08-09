@@ -42,7 +42,7 @@ def sanitize_url(url: str) -> str:
         )
 
     except (TypeError, ValueError) as e:
-        logger.error(f"URL normalizing failed. Error: {e}", exc_info=True)
+        logger.error(f"URL normalizing failed. Error: {e}")
         raise ParsingError
 
     return sanitized_url
@@ -57,7 +57,7 @@ def get_response(entry: DictRow) -> requests.Response:
         response.raise_for_status()
 
     except requests.exceptions.RequestException as e:
-        logger.error(f"HTTP error: {e}", exc_info=True)
+        logger.error(f"HTTP error: {e}")
         raise ResponseError
 
     return response
@@ -86,7 +86,7 @@ def make_check(response: requests.Response) -> tuple[int, str, str, str]:
         )
 
     except (AttributeError, TypeError, KeyError) as e:
-        logger.error(f"Parsing error: {e}", exc_info=True)
+        logger.error(f"Parsing error: {e}")
         raise ParsingError
 
     return (status_code, title, h1, description)
