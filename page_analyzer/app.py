@@ -10,7 +10,7 @@ import flask
 import requests
 
 from page_analyzer import consts, database, sql, utils
-from page_analyzer.exceptions import DatabaseConnectionError, SqlError
+from page_analyzer.exceptions import DatabaseConnectionError, ResponseError, SqlError
 
 dotenv.load_dotenv()
 
@@ -158,6 +158,10 @@ def checks_post(id: int):
             else:
                 logger.error(f"Entry with id {id} isn't found.")
                 flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    except ResponseError as e:
+        logger.warning(f"The check failed due to network issues: {e}")
+        flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
 
     except (ParsingError, SqlError):
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
