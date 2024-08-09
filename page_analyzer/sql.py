@@ -1,9 +1,11 @@
 from datetime import datetime
 import logging
 
+import psycopg2
 from psycopg2.extras import DictCursor, DictRow
 
 from page_analyzer.database import Database
+from page_analyzer.exceptions import DatabaseConnectionError, SqlError
 
 logger = logging.getLogger(__name__)
 
@@ -20,37 +22,29 @@ class Manager:
                            .get_connection()
                            .cursor(cursor_factory=DictCursor))
 
-        except Exception as e:
+        except psycopg2.Error as e:
             logger.error(f"Connection error: {e}.", exc_info=True)
-            raise
+            raise DatabaseConnectionError
 
         return self.cursor
-
-    def _execute(self, sql: str, *args, all: bool) -> DictRow | list[DictRow]:
-        """
-        Executes a query and returns the result.
-
-        If param all is True, returns the list of entries,
-        else returns a single entry.
-        """
-        logger.info(f"Executing SQL query: {sql.format(*args)}")
-        with self._create_cursor() as cursor:
-            try:
-                cursor.execute(sql, args)
-                logger.info("The query succesfully executed.")
-
-                if all:
-                    return cursor.fetchall()
-
-                return cursor.fetchone()
-
-            except Exception as e:
-                logger.error(f"SQL error: {e}.", exc_info=True)
 
     def get_entries(self) -> list[DictRow]:
         """Returns a list of entries."""
         sql = "SELECT id, name, created_at FROM urls;"
-        return self._execute(sql, all=True)
+
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql)
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchall()
 
     def get_last_checks(self) -> list[DictRow]:
         """Returns a list of entries."""
@@ -62,12 +56,36 @@ class Manager:
             FROM url_checks
             ORDER BY url_id, created_at DESC;
             """
-        return self._execute(sql, all=True)
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql)
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchall()
 
     def get_entry(self, id: int) -> DictRow:
         """Returns an entry by id."""
         sql = "SELECT id, name, created_at FROM urls WHERE id = %s;"
-        return self._execute(sql, id, all=False)
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql, (id, ))
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchone()
 
     def get_checks(self, id: int) -> list[DictRow]:
         """Returns a list of checks by id."""
@@ -77,17 +95,56 @@ class Manager:
             WHERE url_id = %s
             ORDER BY id;
             """
-        return self._execute(sql, id, all=True)
+
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql, (id, ))
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchall()
 
     def search_entry_by_url(self, url: str) -> DictRow:
         """Finds an entry by URL."""
         sql = "SELECT id FROM urls WHERE name = %s LIMIT 1;"
-        return self._execute(sql, url, all=False)
+
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql, (url, ))
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchone()
 
     def search_entry_by_id(self, id: int) -> DictRow:
         """Finds an entry by id."""
         sql = "SELECT name FROM urls WHERE id = %s LIMIT 1;"
-        return self._execute(sql, id, all=False)
+
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql, (id, ))
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchone()
 
     def create_entry(self, url: str) -> DictRow:
         """Creates an entry."""
@@ -95,7 +152,20 @@ class Manager:
             INSERT INTO urls (name, created_at)
             VALUES (%s, %s) RETURNING id;
             """
-        return self._execute(sql, url, datetime.now(), all=False)
+
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql, (url, datetime.now()))
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchone()
 
     def create_check(self, id: int, args: tuple[int, str, str, str]) -> DictRow:
         """Creates a check."""
@@ -105,4 +175,16 @@ class Manager:
             VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id;
             """
-        return self._execute(sql, id, datetime.now(), *args, all=False)
+        with self._create_cursor() as cursor:
+            try:
+                cursor.execute(sql, (id, datetime.now(), *args))
+
+            except psycopg2.ProgrammingError as e:
+                logger.error(f"SQL error: {e}.", exc_info=True)
+                raise SqlError
+
+            except psycopg2.InterfaceError as e:
+                logger.error(f"Connection error: {e}.", exc_info=True)
+                raise DatabaseConnectionError
+
+            return cursor.fetchone()

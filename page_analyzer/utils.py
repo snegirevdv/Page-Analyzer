@@ -1,4 +1,5 @@
 from collections import defaultdict
+from configparser import ParsingError
 import logging
 from typing import Optional
 from urllib import parse
@@ -9,6 +10,7 @@ from psycopg2.extras import DictRow
 from validators.url import url
 
 from page_analyzer import consts
+from page_analyzer.exceptions import ResponseError
 
 logger = logging.getLogger(__name__)
 
@@ -33,44 +35,37 @@ def is_valid_url(original_url: str) -> bool:
 
 def sanitize_url(url: str) -> str:
     """Cleans the URL from unnecessary elements."""
-    logger.info("URL normalizing started.")
-
     try:
         parsed_url: parse.ParseResult = parse.urlparse(url)
         sanitized_url: str = parse.urlunparse(
             (parsed_url.scheme, parsed_url.netloc, "", "", "", ""),
         )
 
-    except Exception as e:
+    except (TypeError, ValueError) as e:
         logger.error(f"URL normalizing failed. Error: {e}", exc_info=True)
-        raise
+        raise ParsingError
 
-    logger.info("URL succesfully normalized.")
     return sanitized_url
 
 
 def get_response(entry: DictRow) -> requests.Response:
     """Returns response for the url from the current entry."""
     url: str = entry.get("name", "")
-    logger.info("Receiving HTTP response started.")
 
     try:
         response: requests.Response = requests.get(url)
         response.raise_for_status()
 
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         logger.error(f"HTTP error: {e}", exc_info=True)
-        raise
+        raise ResponseError
 
-    logger.info("HTTP response successfully received.")
     return response
 
 
 def make_check(response: requests.Response) -> tuple[int, str, str, str]:
     """Performs a URL check and returns a tuple with the results."""
-    logger.info("Creating a parser.")
     parser = bs4.BeautifulSoup(response.content, "html.parser")
-    logger.info("Parsing is started.")
 
     try:
         status_code: int = response.status_code
@@ -90,9 +85,8 @@ def make_check(response: requests.Response) -> tuple[int, str, str, str]:
             if description_tag else ""
         )
 
-    except Exception as e:
+    except (AttributeError, TypeError, KeyError) as e:
         logger.error(f"Parsing error: {e}", exc_info=True)
-        raise
+        raise ParsingError
 
-    logger.info("Parsing was succesfully finished.")
     return (status_code, title, h1, description)

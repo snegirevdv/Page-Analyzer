@@ -1,6 +1,8 @@
 import logging
 import psycopg2
 
+from page_analyzer.exceptions import DatabaseConnectionError
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,31 +23,24 @@ class Database:
         """Creates a connection to the database."""
         try:
             if self.is_connected:
-                logger.debug("Closing existing database connection.")
                 self.connection.close()
 
-            logger.info("Connecting to the database.")
             self.connection = psycopg2.connect(self.__database_url)
             self.connection.autocommit = True
-            logger.info("Connected to the database.")
 
             return self.connection
 
-        except Exception as e:
+        except psycopg2.Error as e:
             logger.error(f"Connection error: {e}", exc_info=True)
-            raise e
+            raise DatabaseConnectionError
 
     def close(self):
         """Closes the connection if it exists."""
-        if self.is_connected:
-            logger.info("Closing the database connection.")
-            self.connection.close()
-        logger.debug("No database connections to close.")
+        self.connection.close()
 
     def get_connection(self):
         """Creates a connection if it doesn't exists and returns it"""
         if not self.is_connected:
-            logger.debug("No database connections. Starting a new connection.")
             self.connect()
         return self.connection
 

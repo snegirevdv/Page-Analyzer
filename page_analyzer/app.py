@@ -1,3 +1,4 @@
+from configparser import ParsingError
 from http import HTTPStatus
 import logging
 import os
@@ -9,14 +10,13 @@ import flask
 import requests
 
 from page_analyzer import consts, database, sql, utils
+from page_analyzer.exceptions import DatabaseConnectionError, SqlError
 
 dotenv.load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
-
-logger.info("Running Flask project.")
 
 app: flask.Flask = flask.Flask(__name__)
 
@@ -25,8 +25,6 @@ app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 
 db = database.Database(app.config.get("DATABASE_URL"))
 manager = sql.Manager(db)
-
-logger.info("The project successfully started.")
 
 
 @app.errorhandler(500)
@@ -52,8 +50,6 @@ def index() -> str:
     messages: list = flask.get_flashed_messages(with_categories=True)
     url: str = flask.request.args.get("url", "")
 
-    logger.info("Rendering home page.")
-
     return flask.render_template(
         consts.Template.INDEX.value,
         url=url,
@@ -64,13 +60,15 @@ def index() -> str:
 @app.get("/urls")
 def urls() -> str:
     """Logic for generating the list of URLs."""
-    with db.connect():
-        entries: list[DictRow] = manager.get_entries()
-        last_checks: list[DictRow] = manager.get_last_checks()
+    try:
+        with db.connect():
+            entries: list[DictRow] = manager.get_entries()
+            last_checks: list[DictRow] = manager.get_last_checks()
 
-    merged_entries: list[dict] = utils.merge_entries(entries, last_checks)
+        merged_entries: list[dict] = utils.merge_entries(entries, last_checks)
 
-    logger.info("Rendering URLs page.")
+    except (DatabaseConnectionError, SqlError):
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
     return flask.render_template(
         consts.Template.URLS.value,
@@ -83,12 +81,15 @@ def detail(id: int) -> flask.Response | str:
     """Logic for generating the page of a specific URL."""
     messages: list = flask.get_flashed_messages(with_categories=True)
 
-    with db.connect():
-        entry: DictRow = manager.get_entry(id)
-        checks: list[DictRow] = manager.get_checks(id)
+    try:
+        with db.connect():
+            entry: DictRow = manager.get_entry(id)
+            checks: list[DictRow] = manager.get_checks(id)
+
+    except (DatabaseConnectionError, SqlError):
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
     if entry:
-        logger.info(f"Rendering entry with id {id} detail page")
         return flask.render_template(
             consts.Template.DETAIL.value,
             entry=entry,
@@ -107,8 +108,6 @@ def urls_post() -> str:
     url: str = flask.request.form.to_dict().get("url")
 
     if not utils.is_valid_url(url):
-        logger.info(f"Received an invalid URL {url}. Redirecting to URLs list.")
-
         flask.flash(consts.Message.INVALID_URL.value, "danger")
 
         return flask.render_template(
@@ -118,20 +117,22 @@ def urls_post() -> str:
             redirect_to=flask.url_for("urls"),
         ), HTTPStatus.UNPROCESSABLE_ENTITY
 
-    with db.connect():
-        pure_url: str = utils.sanitize_url(url)
-        search_result: Optional[DictRow] = manager.search_entry_by_url(pure_url)
+    try:
+        with db.connect():
+            pure_url: str = utils.sanitize_url(url)
+            result: Optional[DictRow] = manager.search_entry_by_url(pure_url)
 
-        if search_result:
-            logger.info("Requested entry exists. Redirecting to its page.")
-            url_id: int = search_result.get("id", 0)
-            flask.flash(consts.Message.ALREADY_EXISTS.value, "info")
-            return flask.redirect(flask.url_for("detail", id=url_id))
+            if result:
+                url_id: int = result.get("id", 0)
+                flask.flash(consts.Message.ALREADY_EXISTS.value, "info")
+                return flask.redirect(flask.url_for("detail", id=url_id))
 
-        entry: Optional[DictRow] = manager.create_entry(pure_url)
+            entry: Optional[DictRow] = manager.create_entry(pure_url)
+
+    except (DatabaseConnectionError, SqlError):
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
     if entry:
-        logger.info("Entry successfully added. Redirecting to its page.")
         url_id: int = entry.get("id", 0)
         flask.flash(consts.Message.ADD_SUCCESS.value, "success")
         return flask.redirect(flask.url_for("detail", id=url_id))
@@ -144,30 +145,24 @@ def urls_post() -> str:
 @app.post("/urls/<int:id>/checks")
 def checks_post(id: int):
     """Logic for handling URL check."""
-    with db.connect():
-        entry: Optional[DictRow] = manager.search_entry_by_id(id)
+    try:
+        with db.connect():
+            entry: Optional[DictRow] = manager.search_entry_by_id(id)
 
-        if entry:
-            try:
+            if entry:
                 response: requests.Response = utils.get_response(entry)
                 args: tuple[int, str, str, str] = utils.make_check(response)
                 manager.create_check(id, args)
                 flask.flash(consts.Message.CHECK_SUCCESS.value, "success")
 
-            except requests.exceptions.RequestException as e:
-                logger.warning(f"The check failed due to network issues: {e}")
-                flask.flash(consts.Message.CHECK_FAILURE.value, "danger")
-
-            except Exception as e:
-                logger.error(f"Error: {e}.", exc_info=True)
+            else:
+                logger.error(f"Entry with id {id} isn't found.")
                 flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        else:
-            logger.error(f"Entry with id {id} isn't found.")
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
+    except (ParsingError, SqlError):
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        logger.info("Check succesfully finished. Redirecting to entry page.")
-        return flask.redirect(flask.url_for("detail", id=id))
+    return flask.redirect(flask.url_for("detail", id=id))
 
 
 if __name__ == "__main__":
