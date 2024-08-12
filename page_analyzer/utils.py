@@ -86,7 +86,7 @@ def make_check(response: requests.Response) -> tuple[int, str, str, str]:
         )
 
     except (AttributeError, TypeError, KeyError) as e:
-        logger.error(f"Parsing error: {e}")
+        logger.warning(f"Parsing error: {e}")
         raise ParsingError
 
     return (status_code, title, h1, description)
