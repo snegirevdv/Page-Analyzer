@@ -10,7 +10,11 @@ import flask
 import requests
 
 from page_analyzer import consts, database, sql, utils
-from page_analyzer.exceptions import DatabaseConnectionError, ResponseError, SqlError
+from page_analyzer.exceptions import (
+    DatabaseConnectionError,
+    ResponseError,
+    SqlError,
+)
 
 dotenv.load_dotenv()
 
@@ -20,7 +24,7 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 app: flask.Flask = flask.Flask(__name__)
 
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default-secret-key")
 app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 
 db = database.Database(app.config.get("DATABASE_URL"))
