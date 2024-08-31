@@ -51,6 +51,6 @@ jobs:
           password: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd ~/page_analyzer_flask
-            echo "${{ secrets.SSH_PASSPHRASE }}" | sudo -S docker compose -f docker-compose.production.yml pull
-            echo "${{ secrets.SSH_PASSPHRASE }}" | sudo -S docker compose -f docker-compose.production.yml down
-            echo "${{ secrets.SSH_PASSPHRASE }}" | sudo -S docker compose -f docker-compose.production.yml up -d
+            echo "${{ secrets.SSH_PASSPHRASE }}" | sudo -S docker compose -f docker-compose.production.yml down --volumes --rmi all
+            echo "${{ secrets.SSH_PASSPHRASE }}" | sudo -S docker compose -f docker-compose.production.yml build --no-cache
+            echo "${{ secrets.SSH_PASSPHRASE }}" | sudo -S docker compose -f docker-compose.production.yml up --force-recreate -d
