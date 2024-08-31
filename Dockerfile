@@ -9,6 +9,6 @@ RUN poetry install
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5001
 
 CMD ["make", "start"]
