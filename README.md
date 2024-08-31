@@ -98,4 +98,4 @@ Docker installation:
 
 ## Example
 
-https://page-analyzer-ic89.onrender.com
+[https://page-analyzer.snegirev.dev](https://page-analyzer.snegirev.dev/)
