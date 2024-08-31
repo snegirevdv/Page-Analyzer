@@ -82,7 +82,7 @@ Docker installation:
    touch .env
    ```
 
-3. Start the application using the production Docker Compose file. The application should now be running at `http://localhost:5000`:
+3. Start the application using the production Docker Compose file. The application should now be running at `http://localhost:5001`:
 
    ```sh
    docker-compose -f docker-compose.production.yml up
