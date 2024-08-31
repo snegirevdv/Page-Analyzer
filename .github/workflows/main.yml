@@ -43,6 +43,15 @@ jobs:
           source: "docker-compose.production.yml"
           target: "~/page_analyzer_flask/"
 
+      - name: Copy database.sql
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.SSH_PASSPHRASE }}
+          source: "database.sql"
+          target: "~/page_analyzer_flask/"
+
       - name: Deployment
         uses: appleboy/ssh-action@master
         with:
