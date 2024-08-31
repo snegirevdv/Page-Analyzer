@@ -7,7 +7,7 @@ services:
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+      - ~/page_analyzer_flask/database.sql:/docker-entrypoint-initdb.d/database.sql
 
   flask:
     build: .
