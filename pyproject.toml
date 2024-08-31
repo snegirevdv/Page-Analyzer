@@ -1,20 +1,9 @@
 [tool.poetry]
-name = "hexlet-code"
+name = "page_analyzer"
 version = "0.1.0"
 description = "Page Analyzer"
 authors = ["Denis <snegirev.dv@gmail.com>"]
 readme = "README.md"
-packages = [
-    { include = "page_analyzer" },
-]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Education",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Operating System :: OS Independent",
-    "License :: Freeware"
-]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"

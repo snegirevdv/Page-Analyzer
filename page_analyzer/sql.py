@@ -1,11 +1,10 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 
 import psycopg2
-from psycopg2.extras import DictCursor, DictRow
-
 from page_analyzer.database import Database
 from page_analyzer.exceptions import DatabaseConnectionError, SqlError
+from psycopg2.extras import DictCursor, DictRow
 
 logger = logging.getLogger(__name__)
 

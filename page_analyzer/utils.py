@@ -1,16 +1,15 @@
+import logging
 from collections import defaultdict
 from configparser import ParsingError
-import logging
 from typing import Optional
 from urllib import parse
 
 import bs4
 import requests
-from psycopg2.extras import DictRow
-from validators.url import url
-
 from page_analyzer import consts
 from page_analyzer.exceptions import ResponseError
+from psycopg2.extras import DictRow
+from validators.url import url
 
 logger = logging.getLogger(__name__)
 

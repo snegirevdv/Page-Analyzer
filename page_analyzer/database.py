@@ -1,6 +1,6 @@
 import logging
-import psycopg2
 
+import psycopg2
 from page_analyzer.exceptions import DatabaseConnectionError
 
 logger = logging.getLogger(__name__)

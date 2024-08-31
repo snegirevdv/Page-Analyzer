@@ -1,20 +1,19 @@
-from configparser import ParsingError
-from http import HTTPStatus
 import logging
 import os
+from configparser import ParsingError
+from http import HTTPStatus
 from typing import Optional
 
 import dotenv
-from psycopg2.extras import DictRow
 import flask
 import requests
-
 from page_analyzer import consts, database, sql, utils
 from page_analyzer.exceptions import (
     DatabaseConnectionError,
     ResponseError,
     SqlError,
 )
+from psycopg2.extras import DictRow
 
 dotenv.load_dotenv()
 
