@@ -98,4 +98,4 @@ Docker installation:
 
 ## Example
 
-[https://task-manager.snegirev.dev](https://task-manager.snegirev.dev/)
+[https://page-analyzer.snegirev.dev](https://page-analyzer.snegirev.dev/)
